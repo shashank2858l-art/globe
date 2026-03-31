@@ -79,7 +79,7 @@ export default function PostCard({ post }: PostProps) {
               </span>
             )}
             <span className="text-zinc-600 text-sm">
-              · {new Date(post.createdAt).toLocaleDateString()}
+              · {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
           
