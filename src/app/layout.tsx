@@ -1,28 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import Navbar from "@/components/Navbar";
+import AuthProvider from "@/components/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GlobeHub | Connecting Innovation Across the Globe",
-  description: "Join a worldwide community of visionaries, developers, and creators building the future of technology.",
-  icons: {
-    icon: [
-      {
-        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>",
-        type: "image/svg+xml",
-      },
-    ],
-  },
+  title: "DevHub - Tech Community",
+  description: "A social platform for developers to share, learn, and connect",
 };
 
 export default function RootLayout({
@@ -31,9 +18,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full scroll-smooth">
-      <body className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-[#0a0a0a]`}>
-        {children}
+    <html lang="en">
+      <body className={inter.className}>
+        <AuthProvider>
+          <Navbar />
+          <Toaster position="top-right" />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
