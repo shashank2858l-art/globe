@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import Globe from './Globe';
 
 export default function Hero() {
@@ -56,7 +57,10 @@ export default function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.9 }}
               >
-                <button className="group relative px-8 py-4 rounded-xl overflow-hidden">
+                <Link 
+                  href="/register"
+                  className="group relative px-8 py-4 rounded-xl overflow-hidden inline-block text-center"
+                >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500" />
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <span className="relative flex items-center justify-center gap-2 text-white font-semibold">
@@ -75,9 +79,12 @@ export default function Hero() {
                       />
                     </svg>
                   </span>
-                </button>
+                </Link>
 
-                <button className="group relative px-8 py-4 rounded-xl overflow-hidden border border-zinc-700 hover:border-blue-500/50 transition-colors duration-300">
+                <Link 
+                  href="/explore"
+                  className="group relative px-8 py-4 rounded-xl overflow-hidden border border-zinc-700 hover:border-blue-500/50 transition-colors duration-300 inline-block text-center"
+                >
                   <div className="absolute inset-0 bg-zinc-900/80 backdrop-blur-sm" />
                   <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <span className="relative flex items-center justify-center gap-2 text-white font-semibold">
@@ -91,18 +98,12 @@ export default function Hero() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                       />
                     </svg>
-                    Watch Demo
+                    Explore
                   </span>
-                </button>
+                </Link>
               </motion.div>
 
               <motion.div

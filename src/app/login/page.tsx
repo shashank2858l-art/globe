@@ -17,8 +17,20 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    toast.success('Welcome back! (Demo mode)')
-    router.push('/')
+    // Demo login
+    if (formData.email && formData.password) {
+      toast.success('Welcome back to DevHub!')
+      // Store in localStorage for demo
+      localStorage.setItem('devhub_user', JSON.stringify({
+        email: formData.email,
+        name: formData.email.split('@')[0]
+      }))
+      router.push('/')
+    } else {
+      toast.error('Please fill in all fields')
+    }
+    
+    setIsLoading(false)
   }
 
   return (
@@ -29,6 +41,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <span className="text-white font-bold">D</span>
             </div>
+            <span className="text-white font-bold text-xl">DevHub</span>
           </Link>
           <h1 className="text-2xl font-bold text-white">Welcome back</h1>
           <p className="text-zinc-400 mt-2">Sign in to your DevHub account</p>
