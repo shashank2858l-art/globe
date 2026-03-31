@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
@@ -18,25 +17,8 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false
-      })
-
-      if (result?.error) {
-        toast.error('Invalid email or password')
-      } else {
-        toast.success('Welcome back!')
-        router.push('/')
-        router.refresh()
-      }
-    } catch (error) {
-      toast.error('Something went wrong')
-    } finally {
-      setIsLoading(false)
-    }
+    toast.success('Welcome back! (Demo mode)')
+    router.push('/')
   }
 
   return (

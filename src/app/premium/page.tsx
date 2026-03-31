@@ -1,51 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
 
 export default function PremiumPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
-
-  const success = searchParams.get('success')
-  const canceled = searchParams.get('canceled')
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
-        <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  if (!session?.user) {
-    router.push('/login')
-    return null
-  }
-
-  if (success === 'true') {
-    toast.success('Welcome to DevHub Pro!')
-  }
-
-  if (canceled === 'true') {
-    toast.error('Payment canceled')
-  }
 
   const handleUpgrade = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/stripe', { method: 'POST' })
-      const data = await res.json()
-
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        toast.error(data.error || 'Payment failed')
-      }
+      toast.success('Payment setup coming soon!')
     } catch (error) {
       toast.error('Something went wrong')
     } finally {
@@ -120,6 +85,10 @@ export default function PremiumPage() {
           >
             {isLoading ? 'Processing...' : 'Upgrade to Pro'}
           </button>
+          <p className="mt-4 text-sm text-zinc-500">Sign up to unlock premium features</p>
+          <Link href="/register" className="inline-block mt-2 text-blue-400 hover:text-blue-300">
+            Create an account →
+          </Link>
         </div>
       </div>
     </div>

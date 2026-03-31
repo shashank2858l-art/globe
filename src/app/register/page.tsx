@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
 export default function RegisterPage() {
@@ -20,39 +19,8 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        toast.error(data.error || 'Registration failed')
-        return
-      }
-
-      toast.success('Account created! Please sign in.')
-      
-      const signInResult = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false
-      })
-
-      if (signInResult?.ok) {
-        router.push('/')
-        router.refresh()
-      } else {
-        router.push('/login')
-      }
-    } catch (error) {
-      toast.error('Something went wrong')
-    } finally {
-      setIsLoading(false)
-    }
+    toast.success('Account created! (Demo mode)')
+    router.push('/')
   }
 
   return (
