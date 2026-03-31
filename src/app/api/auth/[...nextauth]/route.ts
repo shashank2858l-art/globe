@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
@@ -9,6 +10,10 @@ const prisma = new PrismaClient()
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -53,12 +58,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt"
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email }
+        })
+
+        if (!existingUser) {
+          const baseUsername = user.email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_")
+          const randomSuffix = Math.random().toString(36).substring(7)
+          const username = `${baseUsername}_${randomSuffix}`
+          
+          await prisma.user.create({
+            data: {
+              email: user.email,
+              name: user.name || "User",
+              image: user.image,
+              username: username,
+            }
+          })
+        }
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.username = (user as any).username
-        token.isVerified = (user as any).isVerified
-        token.isPremium = (user as any).isPremium
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email! }
+        })
+        token.id = dbUser?.id || user.id
+        token.username = dbUser?.username || (user as any).username
+        token.isVerified = dbUser?.isVerified || false
+        token.isPremium = dbUser?.isPremium || false
       }
       return token
     },

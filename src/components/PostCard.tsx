@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 
 interface PostProps {
@@ -28,13 +29,32 @@ interface PostProps {
 }
 
 export default function PostCard({ post }: PostProps) {
+  const { data: session } = useSession()
   const [likes, setLikes] = useState(post._count.likes)
   const [isLiked, setIsLiked] = useState(false)
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikes(isLiked ? likes - 1 : likes + 1)
-    toast.success(isLiked ? 'Removed like' : 'Liked!')
+  const handleLike = async () => {
+    if (!session?.user) {
+      toast.error('Please sign in to like posts')
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/posts/${post.id}/like`, {
+        method: 'POST'
+      })
+      const data = await res.json()
+      setIsLiked(data.liked)
+      setLikes(data.liked ? likes + 1 : likes - 1)
+    } catch (error) {
+      toast.error('Failed to like post')
+    }
+  }
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/post/${post.id}`
+    navigator.clipboard.writeText(url)
+    toast.success('Link copied to clipboard!')
   }
 
   return (
@@ -144,7 +164,10 @@ export default function PostCard({ post }: PostProps) {
               <span>{post._count.comments}</span>
             </button>
             
-            <button className="flex items-center gap-2 text-zinc-500 hover:text-blue-400 transition-colors">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 text-zinc-500 hover:text-blue-400 transition-colors"
+            >
               <svg
                 className="w-5 h-5"
                 fill="none"

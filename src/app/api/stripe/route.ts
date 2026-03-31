@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/app/api/auth/[...nextauth]/route"
 import { PrismaClient } from "@prisma/client"
-import Stripe from "stripe"
 
 const prisma = new PrismaClient()
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2023-10-16" })
 
 export async function POST(request: NextRequest) {
   const session = await auth()
@@ -13,7 +11,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 400 })
+  }
+
   try {
+    const Stripe = (await import("stripe")).default
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" as any })
+
     const user = await prisma.user.findUnique({
       where: { id: session.user.id! }
     })
@@ -55,6 +60,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: checkoutSession.url })
   } catch (error) {
-    return NextResponse.json({ error: "Payment failed" }, { status: 500 })
+    console.error("Stripe error:", error)
+    return NextResponse.json({ error: "Payment setup failed" }, { status: 500 })
   }
 }

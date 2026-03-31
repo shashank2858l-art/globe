@@ -2,15 +2,40 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
 export default function PremiumPage() {
+  const { data: session } = useSession()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success('Welcome to DevHub Pro! 🎉')
+    }
+    if (searchParams.get('canceled') === 'true') {
+      toast.error('Payment was canceled')
+    }
+  }, [searchParams])
+
   const handleUpgrade = async () => {
+    if (!session?.user) {
+      toast.error('Please sign in first')
+      return
+    }
+
     setIsLoading(true)
     try {
-      toast.success('Payment setup coming soon!')
+      const res = await fetch('/api/stripe', { method: 'POST' })
+      const data = await res.json()
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error(data.error || 'Payment setup not configured')
+      }
     } catch (error) {
       toast.error('Something went wrong')
     } finally {
@@ -78,17 +103,26 @@ export default function PremiumPage() {
 
         <div className="mt-12 p-8 rounded-2xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
           <p className="text-4xl font-bold text-white">$9.99<span className="text-xl text-zinc-400">/month</span></p>
-          <button
-            onClick={handleUpgrade}
-            disabled={isLoading}
-            className="mt-6 px-8 py-4 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {isLoading ? 'Processing...' : 'Upgrade to Pro'}
-          </button>
-          <p className="mt-4 text-sm text-zinc-500">Sign up to unlock premium features</p>
-          <Link href="/register" className="inline-block mt-2 text-blue-400 hover:text-blue-300">
-            Create an account →
-          </Link>
+          
+          {!session?.user ? (
+            <div className="mt-6 space-y-4">
+              <Link
+                href="/register"
+                className="inline-block px-8 py-4 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold hover:opacity-90 transition-opacity"
+              >
+                Sign Up to Upgrade
+              </Link>
+              <p className="text-sm text-zinc-500">Already have an account? <Link href="/login" className="text-blue-400 hover:underline">Sign in</Link></p>
+            </div>
+          ) : (
+            <button
+              onClick={handleUpgrade}
+              disabled={isLoading}
+              className="mt-6 px-8 py-4 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {isLoading ? 'Processing...' : 'Upgrade to Pro'}
+            </button>
+          )}
         </div>
       </div>
     </div>

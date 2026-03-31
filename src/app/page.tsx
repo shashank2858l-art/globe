@@ -1,5 +1,37 @@
 import Hero from '@/components/Hero';
 import PostCard from '@/components/PostCard';
+import AIChatWidget from '@/components/AIChatWidget';
+import { prisma } from '@/lib/prisma';
+
+async function getPosts() {
+  try {
+    const posts = await prisma.post.findMany({
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+            isVerified: true,
+            isPremium: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            likes: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    });
+    return posts;
+  } catch (error) {
+    return null;
+  }
+}
 
 const mockPosts = [
   {
@@ -64,7 +96,10 @@ const mockPosts = [
   }
 ];
 
-export default function Home() {
+export default async function Home() {
+  const posts = await getPosts();
+  const displayPosts = posts && posts.length > 0 ? posts : mockPosts;
+
   return (
     <main className="relative min-h-screen bg-[#0a0a0a]">
       <Hero />
@@ -73,7 +108,7 @@ export default function Home() {
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <h2 className="text-2xl font-bold text-white mb-6">Latest Posts</h2>
-            {mockPosts.map((post) => (
+            {displayPosts.map((post: any) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -98,7 +133,7 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Total Posts</span>
-                  <span className="text-white font-medium">1,234</span>
+                  <span className="text-white font-medium">{posts?.length || '∞'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Active Users</span>
@@ -123,6 +158,8 @@ export default function Home() {
           <p>DevHub - Connecting Developers Worldwide</p>
         </div>
       </footer>
+
+      <AIChatWidget />
     </main>
   );
 }
