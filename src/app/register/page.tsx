@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
@@ -22,24 +22,35 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            username: formData.username,
+            full_username: formData.username
+          }
+        }
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        toast.error(data.error || 'Registration failed')
-        setIsLoading(false)
-        return
+      if (error) {
+        toast.error(error.message)
+      } else if (data.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          name: formData.name,
+          username: formData.username,
+          email: formData.email
+        })
+        
+        toast.success('Account created! Welcome to DevHub!')
+        router.push('/')
+        router.refresh()
       }
-
-      toast.success('Account created! Please sign in.')
-      router.push('/login')
     } catch (error) {
       toast.error('Something went wrong')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -47,7 +58,17 @@ export default function RegisterPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/' })
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`
+        }
+      })
+      
+      if (error) {
+        toast.error(error.message)
+        setIsGoogleLoading(false)
+      }
     } catch (error) {
       toast.error('Google sign in failed')
       setIsGoogleLoading(false)

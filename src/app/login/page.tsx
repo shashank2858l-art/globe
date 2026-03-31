@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
@@ -20,14 +20,13 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
-        redirect: false
       })
 
-      if (result?.error) {
-        toast.error('Invalid email or password')
+      if (error) {
+        toast.error(error.message)
       } else {
         toast.success('Welcome back!')
         router.push('/')
@@ -43,7 +42,17 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/' })
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`
+        }
+      })
+      
+      if (error) {
+        toast.error(error.message)
+        setIsGoogleLoading(false)
+      }
     } catch (error) {
       toast.error('Google sign in failed')
       setIsGoogleLoading(false)

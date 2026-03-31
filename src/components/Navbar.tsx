@@ -1,12 +1,44 @@
 'use client'
 
 import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 export default function Navbar() {
-  const { data: session, status } = useSession()
+  const [user, setUser] = useState<any>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        setUser({ ...user, ...profile })
+      }
+      setIsLoading(false)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-zinc-800">
@@ -26,7 +58,7 @@ export default function Navbar() {
             <Link href="/explore" className="text-zinc-400 hover:text-white transition-colors">
               Explore
             </Link>
-            {session?.user && (
+            {user && (
               <Link href="/chat" className="text-zinc-400 hover:text-white transition-colors">
                 Chat
               </Link>
@@ -34,9 +66,9 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            {status === 'loading' ? (
+            {isLoading ? (
               <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
-            ) : session?.user ? (
+            ) : user ? (
               <>
                 <Link
                   href="/create"
@@ -45,7 +77,7 @@ export default function Navbar() {
                   <span>+</span>
                   <span>New Post</span>
                 </Link>
-                {(session.user as any).isPremium && (
+                {user.is_premium && (
                   <span className="hidden md:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-xs font-medium text-white">
                     PRO
                   </span>
@@ -55,16 +87,16 @@ export default function Navbar() {
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                     className="flex items-center gap-2"
                   >
-                    {session.user.image ? (
+                    {user.avatar_url ? (
                       <img
-                        src={session.user.image}
-                        alt={session.user.name || ""}
+                        src={user.avatar_url}
+                        alt={user.name || ""}
                         className="w-8 h-8 rounded-full border border-zinc-700"
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                         <span className="text-white text-sm font-medium">
-                          {session.user.name?.[0]?.toUpperCase()}
+                          {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
                         </span>
                       </div>
                     )}
@@ -72,7 +104,7 @@ export default function Navbar() {
                   {isMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 py-2 bg-[#1a1a1a] rounded-lg shadow-xl border border-zinc-800">
                       <Link
-                        href={`/profile/${(session.user as any).username}`}
+                        href={`/profile/${user.username}`}
                         className="block px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                       >
@@ -87,7 +119,7 @@ export default function Navbar() {
                       </Link>
                       <hr className="my-2 border-zinc-800" />
                       <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
+                        onClick={handleSignOut}
                         className="w-full text-left px-4 py-2 text-red-400 hover:bg-zinc-800 transition-colors"
                       >
                         Sign Out
